@@ -7,7 +7,6 @@
  * Maintained at: http://github.com/ntrel/d-maybe
  */
 import std.stdio;
-import std.functional;
 import std.typecons;
 
 private template MaybeValue(T)
@@ -73,7 +72,7 @@ struct Maybe(T)
     {
         if (val.isNull)
             return false;
-        unaryFun!fun(val.get);
+        fun(val.get);
         return true;
     }
 
@@ -82,7 +81,7 @@ struct Maybe(T)
     {
         Maybe!U m;
         if (!val.isNull)
-            m = unaryFun!fun(val.get);
+            m = fun(val.get);
         return m;
     }
     
