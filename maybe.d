@@ -11,7 +11,8 @@ import std.typecons;
 
 private template MaybeValue(T)
 {
-    // are there any other invalid values?
+    /* Are there any other invalid values?
+     * What about user defined types? */
     static if (is(typeof(T.init == null)))
         alias Nullable!(T, null) MaybeValue;
     else
@@ -65,7 +66,8 @@ struct Maybe(T)
         return val.isNull;
     }
     
-    // should we use delegate(scope T) to prevent escaping or is that too strict? 
+    /* We should probably use delegate(scope T) everywhere to prevent
+     * escaping, but that doesn't compile with dmd 2.059 */
     /** Calls fun if the Maybe value is not null.
      * Returns: Whether fun was called or not. */
     bool attempt(void delegate(T) fun)
@@ -138,7 +140,7 @@ void main(string[] args)
     m.filter(x => x != 0).show();
 
     // test map
-    // map type inference for both T and U causes dmd 2.059 to abort!
+    // Note: map type inference for both T and U causes dmd 2.059 to abort
     //~ auto m2 = m.map(i => i * 2);
     auto m2 = m.map((int i) => i * 2);
     assert(m2 == m.map!int(i => i * 2));
