@@ -138,12 +138,13 @@ void main(string[] args)
     m.filter(x => x != 0).show();
 
     // test map
-    // map type inference causes dmd 2.059 to abort!
+    // map type inference for both T and U causes dmd 2.059 to abort!
     //~ auto m2 = m.map(i => i * 2);
-    auto m2 = m.map!int(i => i * 2);
+    auto m2 = m.map((int i) => i * 2);
+    assert(m2 == m.map!int(i => i * 2));
     assert(m2.valueOr(-1) == 12);
-    //~ auto j = m.map(i => i * 0.5);
-    auto j = maybe(7).map!double(i => i * 0.5);
+    auto j = maybe(7).map((int i) => i * 0.5);
+    assert(is(typeof(j) == Maybe!double));
     assert(j != null);
     assert(j.valueOr(-1) == 3.5);
     j.show();
