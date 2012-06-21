@@ -52,13 +52,17 @@ struct Maybe(T)
         val.nullify();
     }
     
+    bool opEquals(T v)
+    {
+        Maybe!T m = v;
+        return this == m;
+    }
+    
     bool opEquals(Maybe!T m)
     {
         if (m == null && this == null)
             return true;
-        if (m != null && this != null && m.val == this.val)
-            return true;
-        return false;
+        return (m != null && this != null && m.val == this.val);
     }
     
     bool opEquals(typeof(null))
@@ -129,12 +133,12 @@ void main(string[] args)
     Maybe!int m;
     assert(m == null);
     m = 7;
-    assert(m.valueOr(-1) == 7);
+    assert(m == 7);
     m.show();
     m.filter(x => x != 7).show();
     m = null;
     assert(m == null);
-    writeln(m.valueOr(-1));
+    assert(m.valueOr(-1) == -1);
     m = maybe(6);
     assert(m.valueOr(-1) == 6);
     m.filter(x => x != 0).show();
@@ -144,14 +148,14 @@ void main(string[] args)
     //~ auto m2 = m.map(i => i * 2);
     auto m2 = m.map((int i) => i * 2);
     assert(m2 == m.map!int(i => i * 2));
-    assert(m2.valueOr(-1) == 12);
+    assert(m2 == 12);
     auto j = maybe(7).map((int i) => i * 0.5);
     assert(is(typeof(j) == Maybe!double));
     assert(j != null);
-    assert(j.valueOr(-1) == 3.5);
+    assert(j == 3.5);
     j.show();
     j = 0.2;
-    assert(j.valueOr(-1) == 0.2);
+    assert(j == 0.2);
     
     auto r = maybe(args);
     r.attempt(v => writeln(v[0]));
