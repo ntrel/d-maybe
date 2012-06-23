@@ -74,7 +74,7 @@ struct Maybe(T)
      * escaping, but that doesn't compile with dmd 2.059 */
     /** Calls fun if the Maybe value is not null.
      * Returns: Whether fun was called or not. */
-    bool attempt(void delegate(T) fun)
+    bool attempt(scope void delegate(T) fun)
     {
         if (val.isNull)
             return false;
@@ -83,7 +83,7 @@ struct Maybe(T)
     }
 
     /** Calls fun, returning the result as a Maybe value. */
-    Maybe!U map(U)(U delegate(T) fun)
+    Maybe!U map(U)(scope U delegate(T) fun)
     {
         Maybe!U m;
         if (!val.isNull)
@@ -92,7 +92,7 @@ struct Maybe(T)
     }
     
     /** Returns a copy of this Maybe object unless pred(value) is false. */
-    Maybe!T filter(bool delegate(T) pred)
+    Maybe!T filter(scope bool delegate(T) pred)
     {
         Maybe!T m;
         if (this != null && pred(val.get))
