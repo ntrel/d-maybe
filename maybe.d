@@ -113,6 +113,22 @@ struct Maybe(T)
     {
         return val.isNull ? invalid_value : val.get;
     }
+    
+    // inference doesn't work
+    int opApply(D)(scope D dg)
+        if (is(typeof({T v; foreach (e; v){}})))
+    {
+        if (this == null)
+            return 0;
+        int res;
+        foreach(e; val)
+        {
+            res = dg(e);
+            if (res)
+                break;
+        }
+        return res;
+    }
 }
 
 auto maybe(T)(T val)
@@ -157,8 +173,18 @@ void main(string[] args)
     j = 0.2;
     assert(j == 0.2);
     
+    auto s = "hi there";
+    int i;
+    foreach (typeof(s[0]) e; maybe(s))
+    {
+        assert(s[i++] == e);
+    }
+
     auto r = maybe(args);
-    r.attempt(v => writeln(v[0]));
+    foreach (string s; r)
+        writeln(s);
+    r.attempt(v => assert(v is args));
+    assert(r.valueOr(null) is args);
     r = null;
     assert(r == null);
     r.show();
