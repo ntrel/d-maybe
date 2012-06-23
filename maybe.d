@@ -116,7 +116,7 @@ struct Maybe(T)
     
     // inference doesn't work
     int opApply(D)(scope D dg)
-        if (is(typeof({T v; foreach (e; v){}})))
+        if (is(typeof({T v; foreach (e; v) dg(e);})))
     {
         if (this == null)
             return 0;
@@ -126,6 +126,23 @@ struct Maybe(T)
             res = dg(e);
             if (res)
                 break;
+        }
+        return res;
+    }
+
+    int opApply(D)(scope D dg)
+        if (is(typeof({T v; foreach (i, e; v) dg(i, e);})))
+    {
+        if (this == null)
+            return 0;
+        int res;
+        size_t i;
+        foreach(e; val)
+        {
+            res = dg(i, e);
+            if (res)
+                break;
+            i++;
         }
         return res;
     }
@@ -174,8 +191,7 @@ void main(string[] args)
     assert(j == 0.2);
     
     auto s = "hi there";
-    int i;
-    foreach (typeof(s[0]) e; maybe(s))
+    foreach (size_t i, typeof(s[0]) e; maybe(s))
     {
         assert(s[i++] == e);
     }
