@@ -114,24 +114,18 @@ struct Maybe(T)
         return val.isNull ? invalid_value : val.get;
     }
     
-    // inference doesn't work
-    int opApply(D)(scope D dg)
-        if (is(typeof({T v; foreach (e; v) dg(e);})))
+    static if (is(typeof({T v; foreach (e; v) return e; assert(0);}()) E))
+        alias E ElementType;
+
+    int opApply()(scope int delegate(ref ElementType) dg)
+        if (is(ElementType))
     {
-        if (this == null)
-            return 0;
-        int res;
-        foreach(e; val)
-        {
-            res = dg(e);
-            if (res)
-                break;
-        }
-        return res;
+        return opApply((ref i, ref e)=>dg(e));
     }
 
-    int opApply(D)(scope D dg)
-        if (is(typeof({T v; foreach (i, e; v) dg(i, e);})))
+    // foreach inference doesn't work and size_t seems to need ref with dmd 2.059
+    int opApply()(scope int delegate(ref size_t, ref ElementType) dg)
+        if (is(ElementType))
     {
         if (this == null)
             return 0;
@@ -194,6 +188,7 @@ void main(string[] args)
     foreach (size_t i, typeof(s[0]) e; maybe(s))
     {
         assert(s[i++] == e);
+        write(e);
     }
 
     auto r = maybe(args);
