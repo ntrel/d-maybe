@@ -22,7 +22,7 @@ private template MaybeValue(T)
         alias Nullable!T MaybeValue;
 }
 
-/** Contains either a value or nothing, guaranteeing the value is not dereferenced if null.
+/** Contains either a value or nothing, guaranteeing the value is not accessible if invalid.
  * Note: The abstraction can be circumvented using e.g. Maybe.valueOr(null), but at least
  * this is explicit. */
 // similar to Haskell's Maybe or Scala's Option but without OOP or monads.
@@ -72,7 +72,7 @@ struct Maybe(T)
     
     /* We should probably use delegate(scope T) everywhere to prevent
      * escaping, but that doesn't compile with dmd 2.059 */
-    /** Calls fun if the Maybe value is not null.
+    /** Calls fun if the Maybe value is valid.
      * Returns: Whether fun was called or not. */
     bool attempt(scope void delegate(T) fun)
     {
@@ -82,7 +82,7 @@ struct Maybe(T)
         return true;
     }
 
-    /** Calls fun, returning the result as a Maybe value. */
+    /** Attempts to call fun, wrapping the result as a Maybe. */
     Maybe!U map(U)(scope U delegate(T) fun)
     {
         Maybe!U m;
@@ -91,7 +91,8 @@ struct Maybe(T)
         return m;
     }
     
-    /** Returns a copy of this Maybe object unless pred(value) is false. */
+    /** Returns a copy of the Maybe struct if pred returns true, or
+     * an invalid Maybe struct if pred returns false. */
     Maybe!T filter(scope bool delegate(T) pred)
     {
         Maybe!T m;
@@ -100,14 +101,16 @@ struct Maybe(T)
         return m;
     }
     
-    /** Converts the Maybe value into a T.
-     * Params: invalid_value = value to use if this == null.
-     * Note: It's safer to use the other methods instead if possible.
-     * invalid_value can be null, but at least the user is reminded of it:
+    /** Converts the Maybe value into a T, returning invalid_value if invalid.
+     * The argument can be null, but at least the user is reminded of it:
      * ---
      * Maybe!Object m = ...;
      * Object w = m.valueOr(alternativeObject);
-     * Object v = m.valueOr(null); */
+     * Object v = m.valueOr(null);
+     * ---
+     * Params: invalid_value = Value to return if the Maybe value is invalid.
+     * Note: It's safer to avoid using valueOr if possible.
+     */
     // Note: this is called Option::getOrElse in Scala
     T valueOr(T invalid_value)
     {
