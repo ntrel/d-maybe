@@ -8,6 +8,7 @@
  */
 import std.stdio;
 import std.typecons;
+import std.traits;
 
 private template MaybeValue(T)
 {
@@ -117,8 +118,8 @@ struct Maybe(T)
         return val.isNull ? invalid_value : val.get;
     }
     
-    static if (is(typeof({T v; foreach (e; v) return e; assert(0);}()) E))
-        alias E ElementType;
+    static if (is(ForeachType!T FT))
+        alias FT ElementType;
 
     int opApply()(scope int delegate(ref ElementType) dg)
         if (is(ElementType))
