@@ -151,7 +151,7 @@ auto maybe(T)(T val)
 }
 
 // test attempt
-void show(M)(M m)
+void show(T)(Maybe!T m)
 {
     if (!m.attempt(v => writeln(v)))
         writeln("No value");
