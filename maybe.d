@@ -10,15 +10,18 @@ import std.stdio;
 import std.typecons;
 import std.traits;
 
+private template hasNullInit(T)
+{
+    enum hasNullInit =
+        is(typeof(T.init == null)) || is(typeof(T.init == T.nan));
+}
+
 private template MaybeValue(T)
 {
     /* Are there any other invalid values?
      * What about user defined types? */
-    static if (is(typeof(T.init == null)))
-        alias Nullable!(T, null) MaybeValue;
-    else
-    static if (is(typeof(T.init == T.nan)))
-        alias Nullable!(T, T.nan) MaybeValue;
+    static if (hasNullInit!T)
+        alias Nullable!(T, T.init) MaybeValue;
     else
         alias Nullable!T MaybeValue;
 }
@@ -66,9 +69,19 @@ struct Maybe(T)
         return (m != null && this != null && m.val == this.val);
     }
     
+    unittest
+    {
+        // if this fails, remove opEquals workaround
+        assert(!Nullable!(float, float.nan)().isNull);
+    }
+    
     bool opEquals(typeof(null))
     {
-        return val.isNull;
+        // workaround as Nullable.isNull doesn't use 'is' for nan
+        static if (hasNullInit!T)
+            return val.isNull || val.get is T.init;
+        else
+            return val.isNull;
     }
     
     /* We should probably use delegate(scope T) everywhere to prevent
@@ -77,7 +90,7 @@ struct Maybe(T)
      * Returns: Whether fun was called or not. */
     bool attempt(scope void delegate(T) fun)
     {
-        if (val.isNull)
+        if (this == null)
             return false;
         fun(val.get);
         return true;
@@ -87,7 +100,7 @@ struct Maybe(T)
     Maybe!U map(U)(scope U delegate(T) fun)
     {
         Maybe!U m;
-        if (!val.isNull)
+        if (this != null)
             m = fun(val.get);
         return m;
     }
@@ -115,7 +128,7 @@ struct Maybe(T)
     // Note: this is called Option::getOrElse in Scala
     T valueOr(T invalid_value)
     {
-        return val.isNull ? invalid_value : val.get;
+        return this == null ? invalid_value : val.get;
     }
     
     static if (is(ForeachType!T FT))
@@ -222,12 +235,11 @@ void main(string[] args)
     assert(o == null);
     assert(o == o2);
     
-    writeln("Testing floating point null:");
-    Nullable!(double, double.nan) n;
-    double d = n;
-    assert(d is double.nan); //ok
-    assert(n.isNull); // fails because nan is compared with '=='
+    writeln("Testing floating point:");
+    assert(maybe(2.0).map((double x) => x/3) == 2.0/3);
+    double d;
     maybe(d).show();
-    assert(maybe(d) == null); // fails due to Nullable with nan
+    assert(maybe(d) == null);
+    // nan != nan
+    assert(maybe(d) != maybe(d));
 }
-
