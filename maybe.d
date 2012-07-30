@@ -32,6 +32,8 @@ private template MaybeValue(T)
 // similar to Haskell's Maybe or Scala's Option but without OOP or monads.
 struct Maybe(T)
 {
+    alias T Type;
+    
     //~ pragma(msg, MaybeValue!T);
     private MaybeValue!T val;
     
@@ -164,6 +166,52 @@ auto maybe(T)(T val)
     return Maybe!T(val);
 }
 
+template isMaybe(M)
+{
+    static if (is(M.Type))
+        enum isMaybe = is(M == Maybe!(M.Type));
+    else
+        enum isMaybe = false;
+}
+
+import std.range;
+import std.conv;
+
+private string argString(Args...)()
+{
+    string s;
+    foreach (i, Arg; Args)
+    {
+        if (!s.empty)
+            s ~= ", ";
+        s ~= "args[" ~ to!string(i) ~ "]";
+        
+        static if (isMaybe!(Arg))
+            s ~= ".val";
+    }
+    return s;
+}
+
+private bool allValid(Args...)(Args args)
+{
+    foreach (arg; args)
+    {
+        static if (isMaybe!(typeof(arg)))
+            if (arg == null)
+                return false;
+    }
+    return true;
+}
+
+/// Calls fun if all Maybe instances in args are valid.
+// TODO: return Maybe, constraints?
+auto apply(Func, Args...)(Func fun, Args args)
+{
+    if (allValid(args))
+        mixin("fun(" ~ argString!Args() ~ ");");
+    return;
+}
+
 // test attempt
 void show(T)(Maybe!T m)
 {
@@ -171,8 +219,21 @@ void show(T)(Maybe!T m)
         writeln("No value");
 }
 
+void writeTimes(int i, char c)
+{
+    foreach (n; 0..i)
+        write(c);
+    writeln();
+}
+
 void main(string[] args)
 {
+    apply(&writeTimes, maybe(5), 'x');
+    apply(&writeTimes, 4, maybe('f'));
+    apply(&writeTimes, maybe(2), maybe('c'));
+    apply(&writeTimes, 1, 'e');
+    apply(&writeTimes, Maybe!int(), '!');
+    
     // test with int, filter, valueOr
     Maybe!int m;
     assert(m == null);
