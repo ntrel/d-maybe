@@ -203,13 +203,30 @@ private bool allValid(Args...)(Args args)
     return true;
 }
 
-/// Calls fun if all Maybe instances in args are valid.
-// TODO: return Maybe, constraints?
+/** Calls fun if all Maybe instances in args are valid.
+ * Returns: The result of fun, if any, wrapped in a Maybe. */
 auto apply(Func, Args...)(Func fun, Args args)
+    if (isCallable!fun)
 {
-    if (allValid(args))
-        mixin("fun(" ~ argString!Args() ~ ");");
-    return;
+    enum code = "fun(" ~ argString!Args() ~ ");";
+    alias ReturnType!fun Ret;
+    static if (is(Ret == void))
+    {
+        if (allValid(args))
+            mixin(code);
+    }
+    else
+    {
+        Maybe!Ret result;
+        if (allValid(args))
+            mixin("result = " ~ code);
+        return result;
+    }
+}
+
+unittest
+{
+    assert(apply((int x) => 2*x, maybe(5)) == 10);
 }
 
 // test attempt
