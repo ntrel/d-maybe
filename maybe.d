@@ -203,30 +203,40 @@ private bool allValid(Args...)(Args args)
     return true;
 }
 
+private template applyCode(Args...)
+{
+    enum applyCode = "fun(" ~ argString!Args() ~ ");";
+}
+
 /** Calls fun if all Maybe instances in args are valid.
  * Returns: The result of fun, if any, wrapped in a Maybe. */
-auto apply(Func, Args...)(Func fun, Args args)
-    if (isCallable!fun)
+auto apply(alias fun, Args...)(Args args)
+    if (is(typeof({mixin(applyCode!Args);})))
 {
-    enum code = "fun(" ~ argString!Args() ~ ");";
-    alias ReturnType!fun Ret;
+    // remove semicolon from applyCode so lambda can return a value
+    alias typeof((()=>mixin(applyCode!Args[0..$-1]))()) Ret;
     static if (is(Ret == void))
     {
         if (allValid(args))
-            mixin(code);
+            mixin(applyCode!Args);
     }
     else
     {
         Maybe!Ret result;
         if (allValid(args))
-            mixin("result = " ~ code);
+            mixin("result = " ~ applyCode!Args);
         return result;
     }
 }
 
 unittest
 {
-    assert(apply((int x) => 2*x, maybe(5)) == 10);
+    assert(apply!((int x) => 2*x)(maybe(5)) == 10);
+    assert(apply!text(maybe("hi"), 5) == "hi5");
+    assert(apply!text(6, Maybe!string()) == null);
+    assert(text(7, '!') == "7!");
+    //~ assert(apply!text(maybe(7), '!') == "7!"); // error with dmd 2.059
+    //~ assert(apply!text(Maybe!int(), '!') == null);
 }
 
 // test attempt
@@ -245,11 +255,12 @@ void writeTimes(int i, char c)
 
 void main(string[] args)
 {
-    apply(&writeTimes, maybe(5), 'x');
-    apply(&writeTimes, 4, maybe('f'));
-    apply(&writeTimes, maybe(2), maybe('c'));
-    apply(&writeTimes, 1, 'e');
-    apply(&writeTimes, Maybe!int(), '!');
+    apply!writeTimes(maybe(5), 'x');
+    apply!writeTimes(4, maybe('f'));
+    apply!writeTimes(maybe(2), maybe('c'));
+    apply!writeTimes(1, 'e');
+    // template function
+    apply!writeln(maybe("maybe "), "sentence");
     
     // test with int, filter, valueOr
     Maybe!int m;
