@@ -67,7 +67,7 @@ struct Maybe(T)
     bool opEquals(Maybe!T m)
     {
         if (m == null && this == null)
-            return true;
+            return !is(typeof(T.init == T.nan)); // preserve nan != nan
         return (m != null && this != null && m.val == this.val);
     }
     
@@ -328,7 +328,14 @@ void main(string[] args)
     assert(maybe(2.0).map((double x) => x/3) == 2.0/3);
     double d;
     maybe(d).show();
+    //~ assert(d is double.nan); // fails for some reason
+    assert(d is double.init);
     assert(maybe(d) == null);
     // nan != nan
     assert(maybe(d) != maybe(d));
+    assert(Maybe!double() != Maybe!double());
+    d = 2.5;
+    assert(maybe(d) != null);
+    assert(maybe(d) == maybe(d));
+    assert(maybe(d) == maybe(2.5));
 }
