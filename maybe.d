@@ -177,19 +177,24 @@ template isMaybe(M)
 import std.range;
 import std.conv;
 
-private string argString(Args...)()
+private template applyCode(Args...)
 {
-    string s;
-    foreach (i, Arg; Args)
+    string argString()
     {
-        if (!s.empty)
-            s ~= ", ";
-        s ~= "args[" ~ to!string(i) ~ "]";
-        
-        static if (isMaybe!(Arg))
-            s ~= ".val";
+        string s;
+        foreach (i, Arg; Args)
+        {
+            if (!s.empty)
+                s ~= ", ";
+            s ~= "args[" ~ to!string(i) ~ "]";
+            
+            static if (isMaybe!(Arg))
+                s ~= ".val";
+        }
+        return s;
     }
-    return s;
+
+    enum applyCode = "fun(" ~ argString() ~ ");";
 }
 
 private bool allValid(Args...)(Args args)
@@ -201,11 +206,6 @@ private bool allValid(Args...)(Args args)
                 return false;
     }
     return true;
-}
-
-private template applyCode(Args...)
-{
-    enum applyCode = "fun(" ~ argString!Args() ~ ");";
 }
 
 /** Calls fun if all Maybe instances in args are valid.
