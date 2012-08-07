@@ -58,12 +58,24 @@ struct Maybe(T)
         val.nullify();
     }
     
+    /** Tests whether the Maybe value is valid and equal to v.
+     * ---
+     * assert(maybe(5) == 5);
+     * assert(maybe(5) != 6);
+     * ---
+     */
     bool opEquals(T v)
     {
         Maybe!T m = v;
         return this == m;
     }
     
+    /** Tests whether the Maybe value is valid, m is valid, and both values are equal.
+     * ---
+     * assert(maybe(5) == maybe(5));
+     * assert(maybe(5) != maybe(6));
+     * ---
+     */
     bool opEquals(Maybe!T m)
     {
         if (m == null && this == null)
@@ -73,10 +85,16 @@ struct Maybe(T)
     
     unittest
     {
-        // if this fails, remove opEquals workaround
+        // if this fails, remove opEquals workaround below
         assert(!Nullable!(float, float.nan)().isNull);
     }
     
+    /** Tests whether the Maybe value is invalid.
+     * ---
+     * assert(Maybe!int() == null);
+     * assert(maybe(5) != null);
+     * ---
+     */
     bool opEquals(typeof(null))
     {
         // workaround as Nullable.isNull doesn't use 'is' for nan
@@ -208,7 +226,8 @@ private bool allValid(Args...)(Args args)
     return true;
 }
 
-/** Calls fun if all Maybe instances in args are valid.
+/** Calls fun(args), but with any Maybe instances in args unwrapped.
+ * Does nothing if any Maybe instance in args is invalid.
  * Returns: The result of fun, if any, wrapped in a Maybe. */
 auto apply(alias fun, Args...)(Args args)
     if (is(typeof({mixin(applyCode!Args);})))
