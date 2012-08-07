@@ -231,10 +231,12 @@ auto apply(alias fun, Args...)(Args args)
 
 unittest
 {
-    assert(apply!((int x) => 2*x)(maybe(5)) == 10);
+    assert(apply!(x => 2*x)(maybe(5)) == 10);
     assert(apply!text(maybe("hi"), 5) == "hi5");
     assert(apply!text(6, Maybe!string()) == null);
     assert(text(7, '!') == "7!");
+    assert(apply!(text!int)(maybe(7)) == "7");
+    //~ assert(apply!text(maybe(7)) == "7"); // error with dmd 2.059
     //~ assert(apply!text(maybe(7), '!') == "7!"); // error with dmd 2.059
     //~ assert(apply!text(Maybe!int(), '!') == null);
 }
