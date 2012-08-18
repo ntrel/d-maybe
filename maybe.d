@@ -12,8 +12,10 @@ import std.traits;
 
 private template hasNullInit(T)
 {
+    // is T.init an invalid value?
     enum hasNullInit =
-        is(typeof(T.init == null)) || is(typeof(T.init == T.nan));
+        is(typeof(T.init == null)) || is(typeof(T.init == T.nan)) ||
+            isSomeChar!T;
 }
 
 private template MaybeValue(T)
@@ -359,4 +361,9 @@ void main(string[] args)
     assert(maybe(d) != null);
     assert(maybe(d) == maybe(d));
     assert(maybe(d) == maybe(2.5));
+    
+    assert(maybe('c') == 'c');
+    assert(maybe('c') != null);
+    assert(Maybe!char() == null);
+    assert(Maybe!dchar() == null);
 }
