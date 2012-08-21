@@ -5,6 +5,7 @@
  * http://www.boost.org/LICENSE_1_0.txt)
  * 
  * Maintained at: http://github.com/ntrel/d-maybe
+ * Tested with dmd 2.060.
  */
 import std.stdio;
 import std.typecons;
@@ -107,7 +108,7 @@ struct Maybe(T)
     }
     
     /* We should probably use delegate(scope T) everywhere to prevent
-     * escaping, but that doesn't compile with dmd 2.059 */
+     * escaping, but that doesn't compile with dmd 2.060 */
     /** Calls fun if the Maybe value is valid.
      * Returns: Whether fun was called or not. */
     bool attempt(scope void delegate(T) fun)
@@ -162,7 +163,7 @@ struct Maybe(T)
         return opApply((ref i, ref e)=>dg(e));
     }
 
-    // foreach inference doesn't work and size_t seems to need ref with dmd 2.059
+    // foreach inference doesn't work and size_t seems to need ref with dmd 2.060
     int opApply()(scope int delegate(ref size_t, ref ElementType) dg)
         if (is(ElementType))
     {
@@ -255,11 +256,9 @@ unittest
     assert(apply!(x => 2*x)(maybe(5)) == 10);
     assert(apply!text(maybe("hi"), 5) == "hi5");
     assert(apply!text(6, Maybe!string()) == null);
-    assert(text(7, '!') == "7!");
-    assert(apply!(text!int)(maybe(7)) == "7");
-    //~ assert(apply!text(maybe(7)) == "7"); // error with dmd 2.059
-    //~ assert(apply!text(maybe(7), '!') == "7!"); // error with dmd 2.059
-    //~ assert(apply!text(Maybe!int(), '!') == null);
+    assert(apply!text(maybe(7)) == "7");
+    assert(apply!text(maybe(7), '!') == "7!");
+    assert(apply!text(Maybe!int(), '!') == null);
 }
 
 // test attempt
@@ -300,7 +299,7 @@ void main(string[] args)
     m.filter(x => x != 0).show();
 
     // test map
-    // Note: map type inference for both T and U causes dmd 2.059 to abort
+    // Note: map type inference for both T and U doesn't compile with dmd 2.060
     //~ auto m2 = m.map(i => i * 2);
     auto m2 = m.map((int i) => i * 2);
     assert(m2 == m.map!int(i => i * 2));
