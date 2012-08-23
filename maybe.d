@@ -220,7 +220,7 @@ private bool allValid(Args...)(Args args)
 }
 
 /** Attempts to call validFun(args), but with any Maybe instances in args unwrapped.
- * If any Maybe instance in args is invalid, calls invalidFun().
+ * If any Maybe instance in args is invalid, calls invalidFun() instead.
  * invalidFun may return either void or the same type as validFun.
  * Returns: The result of validFun/invalidFun, if any, wrapped in a Maybe. */
 auto match(alias validFun, alias invalidFun, Args...)(Args args)
@@ -261,6 +261,9 @@ unittest
     assert(match!(to!string, ()=>null)(Maybe!int()) == null);
     assert(match!(to!string, {})(maybe(2)) == "2");
     assert(match!(to!string, {})(Maybe!int()) == null);
+    assert(match!((x, y)=>text(x, y), {})(maybe(2), maybe(34)) == "234");
+    assert(match!((x, y)=>text(x, y), {})(Maybe!int(), maybe(34)) == null);
+    assert(match!((x, y)=>text(x, y), ()=>"none")(Maybe!int(), maybe(34)) == "none");
     
     static assert(!is(typeof(match!(to!string, null)(0))));
     static assert(!is(typeof(match!({}, {})(0))));

@@ -73,7 +73,7 @@ It's safer to avoid using <u>valueOr</u> if possible.<br><br>
 <dt><big>auto <u>match</u>(alias validFun, alias invalidFun, Args...)(Args <i>args</i>);
 </big></dt>
 <dd>Attempts to call validFun(args), but with any Maybe instances in args unwrapped.
- If any Maybe instance in args is invalid, calls invalidFun().
+ If any Maybe instance in args is invalid, calls invalidFun() instead.
  invalidFun may return either void or the same type as validFun.
 <br><br>
 <b>Returns:</b><br>
