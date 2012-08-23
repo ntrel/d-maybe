@@ -269,14 +269,15 @@ unittest
 
 /** Attempts to call fun(args), but with any Maybe instances in args unwrapped.
  * Does nothing if any Maybe instance in args is invalid.
+ * Equivalent to <tt>match!(fun, {})(args)</tt>.
  * Returns: The result of fun, if any, wrapped in a Maybe. */
-auto apply(alias fun, Args...)(Args args)
+auto attempt(alias fun, Args...)(Args args)
     if (is(typeof({mixin(applyCode!Args);})))
     //~ if (is(typeof({match!(fun, {})(args);})))
 {
     // remove semicolon from applyCode so lambda can return a value
     alias typeof((()=>mixin(applyCode!Args[0..$-1]))()) Ret;
-    // dmd 2.060: optlink symbol undefined: apply...__lambda
+    // dmd 2.060: optlink symbol undefined: attempt...__lambda
     //~ alias typeof((()=>match!(fun, {})(args))()) Ret;
     static if (is(Ret == void))
     {
@@ -290,12 +291,12 @@ auto apply(alias fun, Args...)(Args args)
 
 unittest
 {
-    assert(apply!(x => 2*x)(maybe(5)) == 10);
-    assert(apply!text(maybe("hi"), 5) == "hi5");
-    assert(apply!text(6, Maybe!string()) == null);
-    assert(apply!text(maybe(7)) == "7");
-    assert(apply!text(maybe(7), '!') == "7!");
-    assert(apply!text(Maybe!int(), '!') == null);
+    assert(attempt!(x => 2*x)(maybe(5)) == 10);
+    assert(attempt!text(maybe("hi"), 5) == "hi5");
+    assert(attempt!text(6, Maybe!string()) == null);
+    assert(attempt!text(maybe(7)) == "7");
+    assert(attempt!text(maybe(7), '!') == "7!");
+    assert(attempt!text(Maybe!int(), '!') == null);
 }
 
 private:
@@ -319,12 +320,12 @@ void writeTimes(int i, char c)
 
 void main(string[] args)
 {
-    apply!writeTimes(maybe(5), 'x');
-    apply!writeTimes(4, maybe('f'));
-    apply!writeTimes(maybe(2), maybe('c'));
-    apply!writeTimes(1, 'e');
+    attempt!writeTimes(maybe(5), 'x');
+    attempt!writeTimes(4, maybe('f'));
+    attempt!writeTimes(maybe(2), maybe('c'));
+    attempt!writeTimes(1, 'e');
     // template function
-    apply!writeln(maybe("maybe "), "sentence");
+    attempt!writeln(maybe("maybe "), "sentence");
     
     // test with int, filter, valueOr
     Maybe!int m;

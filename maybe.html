@@ -8,7 +8,6 @@
 <dl><dt><big>struct <u>Maybe</u>(T);
 </big></dt>
 <dd>Contains either a value or nothing, guaranteeing the value is not accessible if invalid.
- <u>Maybe</u> is a safe option type.
 <br><br>
 <b>Note:</b><br>
 The abstraction can be circumvented using e.g. <u>Maybe</u>.valueOr(<b>null</b>), but at least
@@ -39,14 +38,6 @@ The abstraction can be circumvented using e.g. <u>Maybe</u>.valueOr(<b>null</b>)
  <font color=blue>assert</font>(maybe(5) != <font color=blue>null</font>);
 </pre>
 <br><br>
-
-</dd>
-<dt><big>bool <u>attempt</u>(scope void delegate(T) <i>fun</i>);
-</big></dt>
-<dd>Calls <i>fun</i> if the Maybe value is valid.
-<br><br>
-<b>Returns:</b><br>
-Whether <i>fun</i> was called or not. <br><br>
 
 </dd>
 <dt><big>Maybe!(U) <u>map</u>(U)(scope U delegate(T) <i>fun</i>);
@@ -89,10 +80,11 @@ It's safer to avoid using <u>valueOr</u> if possible.<br><br>
 The result of validFun/invalidFun, if any, wrapped in a Maybe. <br><br>
 
 </dd>
-<dt><big>auto <u>apply</u>(alias fun, Args...)(Args <i>args</i>);
+<dt><big>auto <u>attempt</u>(alias fun, Args...)(Args <i>args</i>);
 </big></dt>
 <dd>Attempts to call fun(args), but with any Maybe instances in args unwrapped.
  Does nothing if any Maybe instance in args is invalid.
+ Equivalent to <tt>match!(fun, {})(args)</tt>.
 <br><br>
 <b>Returns:</b><br>
 The result of fun, if any, wrapped in a Maybe. <br><br>
