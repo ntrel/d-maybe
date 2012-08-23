@@ -229,7 +229,55 @@ private bool allValid(Args...)(Args args)
     return true;
 }
 
-/** Calls fun(args), but with any Maybe instances in args unwrapped.
+/** Attempts to call validFun(args), but with any Maybe instances in args unwrapped.
+ * If any Maybe instance in args is invalid, calls invalidFun().
+ * invalidFun may return either void or the same type as validFun.
+ * Returns: The result of validFun/invalidFun, if any, wrapped in a Maybe. */
+auto match(alias validFun, alias invalidFun, Args...)(Args args)
+    if (is(typeof({alias validFun fun; mixin(applyCode!Args);})))
+{
+    alias validFun fun;
+    // remove semicolon from applyCode so lambda can return a value
+    alias typeof((()=>mixin(applyCode!Args[0..$-1]))()) Ret;
+    static if (is(Ret == void))
+    {
+        if (allValid(args))
+            mixin(applyCode!Args);
+        else
+            invalidFun();
+    }
+    else
+    {
+        Maybe!Ret result;
+        if (allValid(args))
+            mixin("result = " ~ applyCode!Args);
+        else
+        {
+            static if (is(typeof((()=>invalidFun())()) == void))
+                invalidFun();
+            else
+                result = invalidFun();
+        }
+        return result;
+    }
+}
+
+unittest
+{
+    assert(match!(to!string, ()=>"<invalid>")(maybe(2)) == "2");
+    assert(match!(to!string, ()=>"<invalid>")(Maybe!int()) == "<invalid>");
+    assert(match!(to!string, ()=>"<invalid>")(Maybe!int()) != null);
+    assert(match!(to!string, ()=>null)(maybe(2)) == "2");
+    assert(match!(to!string, ()=>null)(Maybe!int()) == null);
+    assert(match!(to!string, {})(maybe(2)) == "2");
+    assert(match!(to!string, {})(Maybe!int()) == null);
+    
+    static assert(!is(typeof(match!(to!string, null)(0))));
+    static assert(!is(typeof(match!({}, {})(0))));
+    static assert(!is(typeof(match!(to!string, to!char)(0))));
+}
+
+/** Attempts to call fun(args), but with any Maybe instances in args unwrapped.
  * Does nothing if any Maybe instance in args is invalid.
  * Returns: The result of fun, if any, wrapped in a Maybe. */
 auto apply(alias fun, Args...)(Args args)
