@@ -109,16 +109,6 @@ struct Maybe(T)
     
     /* We should probably use delegate(scope T) everywhere to prevent
      * escaping, but that doesn't compile with dmd 2.060 */
-    /** Calls fun if the Maybe value is valid.
-     * Returns: Whether fun was called or not. */
-    bool attempt(scope void delegate(T) fun)
-    {
-        if (this == null)
-            return false;
-        fun(val.get);
-        return true;
-    }
-
     /** Attempts to call fun, wrapping the result as a Maybe. */
     Maybe!U map(U)(scope U delegate(T) fun)
     {
@@ -308,11 +298,16 @@ unittest
     assert(apply!text(Maybe!int(), '!') == null);
 }
 
-// test attempt
+private:
+
+// test match
 void show(T)(Maybe!T m)
 {
-    if (!m.attempt(v => writeln(v)))
-        writeln("No value");
+    match!(writeln, ()=>writeln("No value"))(m);
+    // dmd 2.060: match!(lambda, {}, Maybe!double).match is a nested function
+    // and cannot be accessed from show!(double).show
+    //~ match!(v => writeln(v), {})(m);
+    //~ match!(v => writeln(v), ()=>writeln("No value"))(m);
 }
 
 void writeTimes(int i, char c)
@@ -369,7 +364,7 @@ void main(string[] args)
     auto r = maybe(args);
     foreach (string s; r)
         writeln(s);
-    r.attempt(v => assert(v is args));
+    r.match!(v => assert(v is args), {assert(0);})();
     assert(r.valueOr(null) is args);
     r = null;
     assert(r == null);
