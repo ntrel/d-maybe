@@ -282,20 +282,19 @@ unittest
  * Returns: The result of fun, if any, wrapped in a Maybe. */
 auto apply(alias fun, Args...)(Args args)
     if (is(typeof({mixin(applyCode!Args);})))
+    //~ if (is(typeof({match!(fun, {})(args);})))
 {
     // remove semicolon from applyCode so lambda can return a value
     alias typeof((()=>mixin(applyCode!Args[0..$-1]))()) Ret;
+    // dmd 2.060: optlink symbol undefined: apply...__lambda
+    //~ alias typeof((()=>match!(fun, {})(args))()) Ret;
     static if (is(Ret == void))
     {
-        if (allValid(args))
-            mixin(applyCode!Args);
+        match!(fun, {})(args);
     }
     else
     {
-        Maybe!Ret result;
-        if (allValid(args))
-            mixin("result = " ~ applyCode!Args);
-        return result;
+        return match!(fun, {})(args);
     }
 }
 
