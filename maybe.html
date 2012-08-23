@@ -8,6 +8,7 @@
 <dl><dt><big>struct <u>Maybe</u>(T);
 </big></dt>
 <dd>Contains either a value or nothing, guaranteeing the value is not accessible if invalid.
+ <u>Maybe</u> is a safe option type.
 <br><br>
 <b>Note:</b><br>
 The abstraction can be circumvented using e.g. <u>Maybe</u>.valueOr(<b>null</b>), but at least
@@ -59,17 +60,17 @@ Whether <i>fun</i> was called or not. <br><br>
  an invalid Maybe struct if <i>pred</i> returns <b>false</b>. <br><br>
 
 </dd>
-<dt><big>T <u>valueOr</u>(T <i>invalid_value</i>);
+<dt><big>T <u>valueOr</u>(T <i>invalidValue</i>);
 </big></dt>
-<dd>Converts the Maybe value into a T, returning <i>invalid_value</i> if invalid.
- The argument can be <b>null</b>, but at least the user is reminded of it:
+<dd>Converts the Maybe value into a T, returning <i>invalidValue</i> if invalid.
+ <i>invalidValue</i> can be <b>null</b>, but at least this is explicit:
 <pre class="d_code"> Maybe!Object m = ...;
  Object w = m.<u>valueOr</u>(alternativeObject);
  Object v = m.<u>valueOr</u>(<font color=blue>null</font>);
 </pre>
 <br><br>
 <b>Params:</b><br>
-<table><tr><td>T <i>invalid_value</i></td>
+<table><tr><td>T <i>invalidValue</i></td>
 <td>Value to return if the Maybe value is invalid.</td></tr>
 </table><br>
 <b>Note:</b><br>

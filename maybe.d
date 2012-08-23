@@ -138,20 +138,20 @@ struct Maybe(T)
         return m;
     }
     
-    /** Converts the Maybe value into a T, returning invalid_value if invalid.
-     * The argument can be null, but at least the user is reminded of it:
+    /** Converts the Maybe value into a T, returning invalidValue if invalid.
+     * invalidValue can be null, but at least this is explicit:
      * ---
      * Maybe!Object m = ...;
      * Object w = m.valueOr(alternativeObject);
      * Object v = m.valueOr(null);
      * ---
-     * Params: invalid_value = Value to return if the Maybe value is invalid.
+     * Params: invalidValue = Value to return if the Maybe value is invalid.
      * Note: It's safer to avoid using valueOr if possible.
      */
-    // Note: this is called Option::getOrElse in Scala
-    T valueOr(T invalid_value)
+    // Possible names: valueOrElse, getOrElse
+    T valueOr(T invalidValue)
     {
-        return this == null ? invalid_value : val.get;
+        return this == null ? invalidValue : val.get;
     }
     
     static if (is(ForeachType!T FT))
