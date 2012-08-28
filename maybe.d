@@ -222,6 +222,7 @@ private bool allValid(Args...)(Args args)
 
 ///
 template match(alias validFun, alias invalidFun)
+    if (isCallable!invalidFun)
 {
     /** Attempts to call validFun(args), but with any Maybe instances in args unwrapped.
      * If any Maybe instance in args is invalid, calls invalidFun() instead.

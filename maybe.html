@@ -70,7 +70,7 @@ It's safer to avoid using <u>valueOr</u> if possible.<br><br>
 </dd>
 </dl>
 </dd>
-<dt><big>template <u>match</u>(alias validFun,alias invalidFun)</big></dt>
+<dt><big>template <u>match</u>(alias validFun,alias invalidFun) if (isCallable!(invalidFun))</big></dt>
 <dd><br><br>
 <dl><dt><big>auto <u>match</u>(Args...)(Args <i>args</i>);
 </big></dt>
