@@ -188,6 +188,7 @@ template isMaybe(M)
 import std.range;
 import std.conv;
 
+// code for match
 private template applyCode(Args...)
 {
     string argString()
@@ -205,7 +206,7 @@ private template applyCode(Args...)
         return s;
     }
 
-    enum applyCode = "fun(" ~ argString() ~ ");";
+    enum applyCode = "validFun(" ~ argString() ~ ");";
 }
 
 private bool allValid(Args...)(Args args)
@@ -236,9 +237,8 @@ private bool allValid(Args...)(Args args)
 template match(alias validFun, alias invalidFun)
 {
     auto match(Args...)(Args args)
-        if (is(typeof({alias validFun fun; mixin(applyCode!Args);})))
+        if (is(typeof({mixin(applyCode!Args);})))
     {
-        alias validFun fun;
         // remove semicolon from applyCode so lambda can return a value
         alias typeof((()=>mixin(applyCode!Args[0..$-1]))()) Ret;
         static if (is(Ret == void))
