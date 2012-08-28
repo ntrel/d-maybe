@@ -71,6 +71,9 @@ It's safer to avoid using <u>valueOr</u> if possible.<br><br>
 </dl>
 </dd>
 <dt><big>template <u>match</u>(alias validFun,alias invalidFun)</big></dt>
+<dd><br><br>
+<dl><dt><big>auto <u>match</u>(Args...)(Args <i>args</i>);
+</big></dt>
 <dd>Attempts to call validFun(args), but with any Maybe instances in args unwrapped.
  If any Maybe instance in args is invalid, calls invalidFun() instead.
  invalidFun may return either void or the same type as validFun.
@@ -89,7 +92,12 @@ The result of validFun/invalidFun, if any, wrapped in a Maybe.
 <br><br>
 
 </dd>
+</dl>
+</dd>
 <dt><big>template <u>attempt</u>(alias fun)</big></dt>
+<dd><br><br>
+<dl><dt><big>alias <u>attempt</u>;
+</big></dt>
 <dd>Attempts to call fun(args), but with any Maybe instances in args unwrapped.
  Does nothing if any Maybe instance in args is invalid.
  Equivalent to <tt>match!(fun, {})(args)</tt>.
@@ -104,6 +112,8 @@ The result of fun, if any, wrapped in a Maybe.
 </pre>
 <br><br>
 
+</dd>
+</dl>
 </dd>
 </dl>
 
