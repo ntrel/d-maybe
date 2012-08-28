@@ -222,33 +222,46 @@ private bool allValid(Args...)(Args args)
 /** Attempts to call validFun(args), but with any Maybe instances in args unwrapped.
  * If any Maybe instance in args is invalid, calls invalidFun() instead.
  * invalidFun may return either void or the same type as validFun.
- * Returns: The result of validFun/invalidFun, if any, wrapped in a Maybe. */
-auto match(alias validFun, alias invalidFun, Args...)(Args args)
-    if (is(typeof({alias validFun fun; mixin(applyCode!Args);})))
+ * Returns: The result of validFun/invalidFun, if any, wrapped in a Maybe.
+ * Example:
+ * ---
+ * assert(match!(to!string, ()=>"<invalid>")(maybe(2)) == "2");
+ * assert(match!(to!string, ()=>"<invalid>")(Maybe!int()) == "<invalid>");
+ * assert(match!(to!string, {})(maybe(2)) == "2");
+ * assert(match!(to!string, {})(Maybe!int()) == null);
+ * assert(match!((x, y)=>text(x, y), {})(maybe(2), maybe(34)) == "234");
+ * assert(match!((x, y)=>text(x, y), {})(Maybe!int(), maybe(34)) == null);
+ * ---
+ */
+template match(alias validFun, alias invalidFun)
 {
-    alias validFun fun;
-    // remove semicolon from applyCode so lambda can return a value
-    alias typeof((()=>mixin(applyCode!Args[0..$-1]))()) Ret;
-    static if (is(Ret == void))
+    auto match(Args...)(Args args)
+        if (is(typeof({alias validFun fun; mixin(applyCode!Args);})))
     {
-        if (allValid(args))
-            mixin(applyCode!Args);
-        else
-            invalidFun();
-    }
-    else
-    {
-        Maybe!Ret result;
-        if (allValid(args))
-            mixin("result = " ~ applyCode!Args);
+        alias validFun fun;
+        // remove semicolon from applyCode so lambda can return a value
+        alias typeof((()=>mixin(applyCode!Args[0..$-1]))()) Ret;
+        static if (is(Ret == void))
+        {
+            if (allValid(args))
+                mixin(applyCode!Args);
+            else
+                invalidFun();
+        }
         else
         {
-            static if (is(typeof((()=>invalidFun())()) == void))
-                invalidFun();
+            Maybe!Ret result;
+            if (allValid(args))
+                mixin("result = " ~ applyCode!Args);
             else
-                result = invalidFun();
+            {
+                static if (is(typeof((()=>invalidFun())()) == void))
+                    invalidFun();
+                else
+                    result = invalidFun();
+            }
+            return result;
         }
-        return result;
     }
 }
 
@@ -273,23 +286,17 @@ unittest
 /** Attempts to call fun(args), but with any Maybe instances in args unwrapped.
  * Does nothing if any Maybe instance in args is invalid.
  * Equivalent to <tt>match!(fun, {})(args)</tt>.
- * Returns: The result of fun, if any, wrapped in a Maybe. */
-auto attempt(alias fun, Args...)(Args args)
-    if (is(typeof({mixin(applyCode!Args);})))
-    //~ if (is(typeof({match!(fun, {})(args);})))
+ * Returns: The result of fun, if any, wrapped in a Maybe.
+ * Example:
+ * ---
+ * assert(attempt!(x => 2*x)(maybe(5)) == 10);
+ * assert(attempt!text(maybe("hi"), 5) == "hi5");
+ * assert(attempt!text(6, Maybe!string()) == null);
+ * ---
+ */
+template attempt(alias fun)
 {
-    // remove semicolon from applyCode so lambda can return a value
-    alias typeof((()=>mixin(applyCode!Args[0..$-1]))()) Ret;
-    // dmd 2.060: optlink symbol undefined: attempt...__lambda
-    //~ alias typeof((()=>match!(fun, {})(args))()) Ret;
-    static if (is(Ret == void))
-    {
-        match!(fun, {})(args);
-    }
-    else
-    {
-        return match!(fun, {})(args);
-    }
+    alias match!(fun, {}) attempt;
 }
 
 unittest
