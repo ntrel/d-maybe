@@ -285,6 +285,37 @@ unittest
     static assert(!is(typeof(match!(to!string, to!char)(0))));
 }
 
+/** Attempts to call validFun(args), but with any Maybe instances in args unwrapped.
+ * If any Maybe instance in args is invalid, calls invalidFun() instead.
+ * invalidFun has to return the same type as validFun.
+ * The return type is not allowed to be a 'nullable' type like Object or float,
+ * which is why the result is not wrapped in a Maybe.
+ * Returns: The result of validFun/invalidFun.
+ * Example:
+ * ---
+ * assert(matchVal!(x=>2*x, ()=>-1)(maybe(4)) is 8);
+ * assert(matchVal!(x=>2*x, ()=>-1)(Maybe!int()) is -1);
+ * ---
+ */
+// based on an idea by Simen Kjaeraas
+auto matchVal(alias validFun, alias invalidFun, Args...)(Args args)
+    if (is(typeof(match!(validFun, invalidFun)(args))))
+{
+    auto m = match!(validFun, invalidFun)(args);
+    static assert(is(m.Type == ReturnType!invalidFun));
+    static assert(!hasNullInit!(m.Type));
+    return m.val;
+}
+
+unittest
+{
+    assert(matchVal!(x=>2*x, ()=>-1)(maybe(4)) is 8);
+    assert(matchVal!(x=>2*x, ()=>-1)(Maybe!int()) is -1);
+    static assert(!__traits(compiles, matchVal!(x=>x, {})(maybe(2))));
+    static assert(!__traits(compiles, matchVal!(x=>x, ()=>0.0F)(maybe(1.0F))));
+    static assert(!__traits(compiles, matchVal!(x=>x, ()=>null)(maybe("string"))));
+}
+
 /// Eponymous template.
 template attempt(alias fun)
 {

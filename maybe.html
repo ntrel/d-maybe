@@ -95,6 +95,24 @@ The result of validFun/invalidFun, if any, wrapped in a Maybe.
 </dd>
 </dl>
 </dd>
+<dt><big>auto <u>matchVal</u>(alias validFun, alias invalidFun, Args...)(Args <i>args</i>);
+</big></dt>
+<dd>Attempts to call validFun(args), but with any Maybe instances in args unwrapped.
+ If any Maybe instance in args is invalid, calls invalidFun() instead.
+ invalidFun has to return the same type as validFun.
+ The return type is not allowed to be a 'nullable' type like Object or float,
+ which is why the result is not wrapped in a Maybe.
+<br><br>
+<b>Returns:</b><br>
+The result of validFun/invalidFun.
+<br><br>
+<b>Example:</b><br>
+<pre class="d_code"> <font color=blue>assert</font>(<u>matchVal</u>!(x=&gt;2*x, ()=&gt;-1)(maybe(4)) <font color=blue>is</font> 8);
+ <font color=blue>assert</font>(<u>matchVal</u>!(x=&gt;2*x, ()=&gt;-1)(Maybe!<font color=blue>int</font>()) <font color=blue>is</font> -1);
+</pre>
+<br><br>
+
+</dd>
 <dt><big>template <u>attempt</u>(alias fun)</big></dt>
 <dd>Eponymous template.<br><br>
 
