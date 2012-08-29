@@ -220,7 +220,7 @@ private bool allValid(Args...)(Args args)
     return true;
 }
 
-///
+/// Eponymous template.
 template match(alias validFun, alias invalidFun)
     if (isCallable!invalidFun)
 {
@@ -285,7 +285,7 @@ unittest
     static assert(!is(typeof(match!(to!string, to!char)(0))));
 }
 
-///
+/// Eponymous template.
 template attempt(alias fun)
 {
     /** Attempts to call fun(args), but with any Maybe instances in args unwrapped.
