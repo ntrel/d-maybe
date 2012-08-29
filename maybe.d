@@ -280,6 +280,10 @@ unittest
     assert(match!((x, y)=>text(x, y), {})(Maybe!int(), maybe(34)) == null);
     assert(match!((x, y)=>text(x, y), ()=>"none")(Maybe!int(), maybe(34)) == "none");
     
+    static assert(!__traits(compiles, match!({}, {})(maybe(2))));
+    static assert(__traits(compiles, match!(x=>x, ()=>0.0F)(1.0F)));
+    // constraint error, dmd 2.060
+    //~ static assert(__traits(compiles, match!(x=>x, ()=>0.0F)(maybe(1.0F))));
     static assert(!is(typeof(match!(to!string, null)(0))));
     static assert(!is(typeof(match!({}, {})(0))));
     static assert(!is(typeof(match!(to!string, to!char)(0))));
