@@ -40,11 +40,6 @@ The abstraction can be circumvented using e.g. <u>Maybe</u>.valueOr(<b>null</b>)
 <br><br>
 
 </dd>
-<dt><big>Maybe!(U) <u>map</u>(U)(scope U delegate(T) <i>fun</i>);
-</big></dt>
-<dd>Attempts to call fun, wrapping the result as a Maybe. <br><br>
-
-</dd>
 <dt><big>Maybe!(T) <u>filter</u>(scope bool delegate(T) <i>pred</i>);
 </big></dt>
 <dd>Returns a copy of the Maybe struct if <i>pred</i> returns <b>true</b>, or

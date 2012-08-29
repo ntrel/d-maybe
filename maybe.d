@@ -109,15 +109,6 @@ struct Maybe(T)
     
     /* We should probably use delegate(scope T) everywhere to prevent
      * escaping, but that doesn't compile with dmd 2.060 */
-    /** Attempts to call fun, wrapping the result as a Maybe. */
-    Maybe!U map(U)(scope U delegate(T) fun)
-    {
-        Maybe!U m;
-        if (this != null)
-            m = fun(val.get);
-        return m;
-    }
-    
     /** Returns a copy of the Maybe struct if pred returns true, or
      * an invalid Maybe struct if pred returns false. */
     Maybe!T filter(scope bool delegate(T) pred)
@@ -389,13 +380,10 @@ void main(string[] args)
     assert(m.valueOr(-1) == 6);
     m.filter(x => x != 0).show();
 
-    // test map
-    // Note: map type inference for both T and U doesn't compile with dmd 2.060
-    //~ auto m2 = m.map(i => i * 2);
-    auto m2 = m.map((int i) => i * 2);
-    assert(m2 == m.map!int(i => i * 2));
+    // test attempt
+    auto m2 = m.attempt!(i => i * 2)();
     assert(m2 == 12);
-    auto j = maybe(7).map((int i) => i * 0.5);
+    auto j = maybe(7).attempt!(i => i * 0.5)();
     assert(is(typeof(j) == Maybe!double));
     assert(j != null);
     assert(j == 3.5);
@@ -438,7 +426,7 @@ void main(string[] args)
     assert(o == o2);
     
     writeln("Testing floating point:");
-    assert(maybe(2.0).map((double x) => x/3) == 2.0/3);
+    assert(maybe(2.0).attempt!(x => x/3)() == 2.0/3);
     double d;
     maybe(d).show();
     //~ assert(d is double.nan); // fails for some reason
