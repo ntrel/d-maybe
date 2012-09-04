@@ -11,6 +11,11 @@ import std.stdio;
 import std.typecons;
 import std.traits;
 
+struct None {}
+
+/// Invalid value used for assignment/comparison with a Maybe instance.
+None none;
+
 private template hasNullInit(T)
 {
     // is T.init an invalid value?
@@ -32,7 +37,7 @@ private template MaybeValue(T)
 /** Contains either a value or nothing, guaranteeing the value is not accessible if invalid.
  * Note: The abstraction can be circumvented using e.g. Maybe.valueOr(null), but at least
  * this is explicit. */
-// similar to Haskell's Maybe or Scala's Option but without OOP or monads.
+// similar to Haskell's Maybe or Scala's Option but without monads or OOP.
 struct Maybe(T)
 {
     alias T Type;
@@ -56,7 +61,7 @@ struct Maybe(T)
         this.val = m.val;
     }
         
-    void opAssign(typeof(null))
+    void opAssign(None)
     {
         val.nullify();
     }
@@ -81,9 +86,9 @@ struct Maybe(T)
      */
     bool opEquals(Maybe!T m)
     {
-        if (m == null && this == null)
+        if (m == none && this == none)
             return !is(typeof(T.init == T.nan)); // preserve nan != nan
-        return (m != null && this != null && m.val == this.val);
+        return (m != none && this != none && m.val == this.val);
     }
     
     unittest
@@ -94,11 +99,11 @@ struct Maybe(T)
     
     /** Tests whether the Maybe value is invalid.
      * ---
-     * assert(Maybe!int() == null);
-     * assert(maybe(5) != null);
+     * assert(Maybe!int() == none);
+     * assert(maybe(5) != none);
      * ---
      */
-    bool opEquals(typeof(null))
+    bool opEquals(None)
     {
         // workaround as Nullable.isNull doesn't use 'is' for nan
         static if (hasNullInit!T)
@@ -114,7 +119,7 @@ struct Maybe(T)
     Maybe!T filter(scope bool delegate(T) pred)
     {
         Maybe!T m;
-        if (this != null && pred(val.get))
+        if (this != none && pred(val.get))
             m = this;
         return m;
     }
@@ -132,7 +137,7 @@ struct Maybe(T)
     // Possible names: valueOrElse, getOrElse
     T valueOr(T invalidValue)
     {
-        return this == null ? invalidValue : val.get;
+        return this == none ? invalidValue : val.get;
     }
     
     static if (is(ForeachType!T FT))
@@ -148,7 +153,7 @@ struct Maybe(T)
     int opApply()(scope int delegate(ref size_t, ref ElementType) dg)
         if (is(ElementType))
     {
-        if (this == null)
+        if (this == none)
             return 0;
         int res;
         size_t i;
@@ -161,6 +166,20 @@ struct Maybe(T)
         }
         return res;
     }
+}
+
+unittest
+{
+    auto s = Maybe!string();
+    assert(s == none);
+    assert(s == null);
+    s = "hi";
+    assert(s == "hi");
+    assert(s != none);
+    assert(s != null);
+    s = null;
+    assert(s == null);
+    assert(s == none);
 }
 
 auto maybe(T)(T val)
@@ -205,7 +224,7 @@ private bool allValid(Args...)(Args args)
     foreach (arg; args)
     {
         static if (isMaybe!(typeof(arg)))
-            if (arg == null)
+            if (arg == none)
                 return false;
     }
     return true;
@@ -224,9 +243,9 @@ template match(alias validFun, alias invalidFun)
      * assert(match!(to!string, ()=>"<invalid>")(maybe(2)) == "2");
      * assert(match!(to!string, ()=>"<invalid>")(Maybe!int()) == "<invalid>");
      * assert(match!(to!string, {})(maybe(2)) == "2");
-     * assert(match!(to!string, {})(Maybe!int()) == null);
+     * assert(match!(to!string, {})(Maybe!int()) == none);
      * assert(match!((x, y)=>text(x, y), {})(maybe(2), maybe(34)) == "234");
-     * assert(match!((x, y)=>text(x, y), {})(Maybe!int(), maybe(34)) == null);
+     * assert(match!((x, y)=>text(x, y), {})(Maybe!int(), maybe(34)) == none);
      * ---
      */
     auto match(Args...)(Args args)
@@ -262,13 +281,13 @@ unittest
 {
     assert(match!(to!string, ()=>"<invalid>")(maybe(2)) == "2");
     assert(match!(to!string, ()=>"<invalid>")(Maybe!int()) == "<invalid>");
-    assert(match!(to!string, ()=>"<invalid>")(Maybe!int()) != null);
+    assert(match!(to!string, ()=>"<invalid>")(Maybe!int()) != none);
     assert(match!(to!string, ()=>null)(maybe(2)) == "2");
-    assert(match!(to!string, ()=>null)(Maybe!int()) == null);
+    assert(match!(to!string, ()=>null)(Maybe!int()) == none);
     assert(match!(to!string, {})(maybe(2)) == "2");
-    assert(match!(to!string, {})(Maybe!int()) == null);
+    assert(match!(to!string, {})(Maybe!int()) == none);
     assert(match!((x, y)=>text(x, y), {})(maybe(2), maybe(34)) == "234");
-    assert(match!((x, y)=>text(x, y), {})(Maybe!int(), maybe(34)) == null);
+    assert(match!((x, y)=>text(x, y), {})(Maybe!int(), maybe(34)) == none);
     assert(match!((x, y)=>text(x, y), ()=>"none")(Maybe!int(), maybe(34)) == "none");
     
     static assert(!__traits(compiles, match!({}, {})(maybe(2))));
@@ -322,7 +341,7 @@ template attempt(alias fun)
      * ---
      * assert(attempt!(x => 2*x)(maybe(5)) == 10);
      * assert(attempt!text(maybe("hi"), 5) == "hi5");
-     * assert(attempt!text(6, Maybe!string()) == null);
+     * assert(attempt!text(6, Maybe!string()) == none);
      * ---
      */
     alias match!(fun, {}) attempt;
@@ -332,10 +351,10 @@ unittest
 {
     assert(attempt!(x => 2*x)(maybe(5)) == 10);
     assert(attempt!text(maybe("hi"), 5) == "hi5");
-    assert(attempt!text(6, Maybe!string()) == null);
+    assert(attempt!text(6, Maybe!string()) == none);
     assert(attempt!text(maybe(7)) == "7");
     assert(attempt!text(maybe(7), '!') == "7!");
-    assert(attempt!text(Maybe!int(), '!') == null);
+    assert(attempt!text(Maybe!int(), '!') == none);
 }
 
 private:
@@ -368,13 +387,13 @@ void main(string[] args)
     
     // test with int, filter, valueOr
     Maybe!int m;
-    assert(m == null);
+    assert(m == none);
     m = 7;
     assert(m == 7);
     m.show();
     m.filter(x => x != 7).show();
-    m = null;
-    assert(m == null);
+    m = none;
+    assert(m == none);
     assert(m.valueOr(-1) == -1);
     m = maybe(6);
     assert(m.valueOr(-1) == 6);
@@ -385,7 +404,7 @@ void main(string[] args)
     assert(m2 == 12);
     auto j = maybe(7).attempt!(i => i * 0.5)();
     assert(is(typeof(j) == Maybe!double));
-    assert(j != null);
+    assert(j != none);
     assert(j == 3.5);
     j.show();
     j = 0.2;
@@ -403,26 +422,26 @@ void main(string[] args)
         writeln(s);
     r.match!(v => assert(v is args), {assert(0);})();
     assert(r.valueOr(null) is args);
-    r = null;
-    assert(r == null);
+    r = none;
+    assert(r == none);
     r.show();
     r.valueOr(null).writeln();
     
     // test with Object and opEquals
     Maybe!Object o;
-    assert(o == null);
+    assert(o == none);
     o = new Object();
-    assert(o != null);
+    assert(o != none);
     o = o.filter(x => true);
-    assert(o != null);
+    assert(o != none);
     auto o2 = o;
     assert(o == o2);
     o2 = new Object();
     assert(o != o2);
-    o2 = null;
+    o2 = none;
     assert(o != o2);
-    o = null;
-    assert(o == null);
+    o = none;
+    assert(o == none);
     assert(o == o2);
     
     writeln("Testing floating point:");
@@ -431,17 +450,17 @@ void main(string[] args)
     maybe(d).show();
     //~ assert(d is double.nan); // fails for some reason
     assert(d is double.init);
-    assert(maybe(d) == null);
+    assert(maybe(d) == none);
     // nan != nan
     assert(maybe(d) != maybe(d));
     assert(Maybe!double() != Maybe!double());
     d = 2.5;
-    assert(maybe(d) != null);
+    assert(maybe(d) != none);
     assert(maybe(d) == maybe(d));
     assert(maybe(d) == maybe(2.5));
     
     assert(maybe('c') == 'c');
-    assert(maybe('c') != null);
-    assert(Maybe!char() == null);
-    assert(Maybe!dchar() == null);
+    assert(maybe('c') != none);
+    assert(Maybe!char() == none);
+    assert(Maybe!dchar() == none);
 }
