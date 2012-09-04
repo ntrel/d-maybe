@@ -16,7 +16,7 @@ private template hasNullInit(T)
     // is T.init an invalid value?
     enum hasNullInit =
         is(typeof(T.init == null)) || is(typeof(T.init == T.nan)) ||
-            isSomeChar!T;
+            isSomeChar!T || isDynamicArray!T;
 }
 
 private template MaybeValue(T)
