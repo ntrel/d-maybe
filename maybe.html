@@ -102,7 +102,10 @@ The result of validFun/invalidFun, if any, wrapped in a Maybe.
 </dd>
 </dl>
 </dd>
-<dt><big>auto <u>matchVal</u>(alias validFun, alias invalidFun, Args...)(Args <i>args</i>);
+<dt><big>template <u>matchVal</u>(alias validFun,alias invalidFun) if (isInvalidFun!(invalidFun))<br>template <u>matchVal</u>(alias invalidFun,alias validFun) if (isInvalidFun!(invalidFun))</big></dt>
+<dd>Eponymous template.<br><br>
+
+<dl><dt><big>auto <u>matchVal</u>(Args...)(Args <i>args</i>);
 </big></dt>
 <dd>Attempts to call validFun(args), but with any Maybe instances in args unwrapped.
  If any Maybe instance in args is invalid, calls invalidFun() instead.
@@ -116,9 +119,12 @@ The actual result of validFun/invalidFun.
 <b>Example:</b><br>
 <pre class="d_code"> <font color=blue>assert</font>(<u>matchVal</u>!(x=&gt;2*x, ()=&gt;-1)(maybe(4)) <font color=blue>is</font> 8);
  <font color=blue>assert</font>(<u>matchVal</u>!(x=&gt;2*x, ()=&gt;-1)(Maybe!<font color=blue>int</font>()) <font color=blue>is</font> -1);
+ <font color=blue>assert</font>(<u>matchVal</u>!(()=&gt;-1, x=&gt;2*x)(maybe(4)) <font color=blue>is</font> 8);
 </pre>
 <br><br>
 
+</dd>
+</dl>
 </dd>
 <dt><big>template <u>attempt</u>(alias fun)</big></dt>
 <dd>Eponymous template.<br><br>
