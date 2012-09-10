@@ -230,15 +230,25 @@ private bool allValid(Args...)(Args args)
     return true;
 }
 
+/* don't include template functions otherwise we can't distinguish
+ * when validFun is e.g. writeln or text */
+private template isInvalidFun(alias fun)
+{
+    enum isInvalidFun = __traits(compiles, {fun();}) &&
+        isSomeFunction!fun;
+        // doesn't work, 2.060
+        //~ && variadicFunctionStyle!fun == Variadic.no;
+}
+
 /// Eponymous template.
 template match(alias validFun, alias invalidFun)
-    if (isCallable!invalidFun)
+    if (isInvalidFun!invalidFun)
 {
     /** Attempts to call validFun(args), but with any Maybe instances in args unwrapped.
      * If any Maybe instance in args is invalid, calls invalidFun() instead.
      * invalidFun may return either void or the same type as validFun.
      * Returns: The result of validFun/invalidFun, if any, wrapped in a Maybe.
-     * Example:
+     * Examples:
      * ---
      * assert(match!(to!string, ()=>"<invalid>")(maybe(2)) == "2");
      * assert(match!(to!string, ()=>"<invalid>")(Maybe!int()) == "<invalid>");
@@ -246,6 +256,15 @@ template match(alias validFun, alias invalidFun)
      * assert(match!(to!string, {})(Maybe!int()) == none);
      * assert(match!((x, y)=>text(x, y), {})(maybe(2), maybe(34)) == "234");
      * assert(match!((x, y)=>text(x, y), {})(Maybe!int(), maybe(34)) == none);
+     * ---
+     * Arguments to match don't have to be Maybe instances:
+     * ---
+     * assert(match!(text, {})(1, maybe(2), 3) == "123");
+     * ---
+     * The order of validFun and invalidFun can be reversed:
+     * ---
+     * assert(match!({}, text)(maybe('m')) == "m");
+     * assert(match!({}, text)(Maybe!char()) == none);
      * ---
      */
     auto match(Args...)(Args args)
@@ -279,6 +298,7 @@ template match(alias validFun, alias invalidFun)
 
 unittest
 {
+    assert(match!(text, {})(1, maybe(2), 3) == "123");
     assert(match!(to!string, ()=>"<invalid>")(maybe(2)) == "2");
     assert(match!(to!string, ()=>"<invalid>")(Maybe!int()) == "<invalid>");
     assert(match!(to!string, ()=>"<invalid>")(Maybe!int()) != none);
@@ -299,12 +319,31 @@ unittest
     static assert(!is(typeof(match!(to!string, to!char)(0))));
 }
 
+/// ditto
+template match(alias invalidFun, alias validFun)
+    if (isInvalidFun!invalidFun)
+{
+    alias match!(validFun, invalidFun) match;
+}
+
+unittest
+{
+    assert(match!({}, text)(maybe('m')) == "m");
+    assert(match!({}, text)(Maybe!char()) == none);
+    // x=>1*x workaround as x=>x doesn't work (2.060)
+    assert(match!(()=>-1, x=>1*x)(maybe(2)) == 2);
+    assert(match!(()=>-1, x=>1*x)(Maybe!int()) == -1);
+    assert(match!({}, x=>1*x)(maybe(2)) == 2);
+    //~ assert(match!({}, x=>x)(maybe(2)) == 2);
+    //~ assert(match!({}, x=>x)(maybe('m')) == 'm');
+}
+
 /** Attempts to call validFun(args), but with any Maybe instances in args unwrapped.
  * If any Maybe instance in args is invalid, calls invalidFun() instead.
  * invalidFun has to return the same type as validFun.
  * The return type is not allowed to be a 'nullable' type like Object or float,
  * which is why the result is not wrapped in a Maybe.
- * Returns: The result of validFun/invalidFun.
+ * Returns: The actual result of validFun/invalidFun.
  * Example:
  * ---
  * assert(matchVal!(x=>2*x, ()=>-1)(maybe(4)) is 8);

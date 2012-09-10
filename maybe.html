@@ -70,7 +70,7 @@ It's safer to avoid using <u>valueOr</u> if possible.<br><br>
 </dd>
 </dl>
 </dd>
-<dt><big>template <u>match</u>(alias validFun,alias invalidFun) if (isCallable!(invalidFun))</big></dt>
+<dt><big>template <u>match</u>(alias validFun,alias invalidFun) if (isInvalidFun!(invalidFun))<br>template <u>match</u>(alias invalidFun,alias validFun) if (isInvalidFun!(invalidFun))</big></dt>
 <dd>Eponymous template.<br><br>
 
 <dl><dt><big>auto <u>match</u>(Args...)(Args <i>args</i>);
@@ -82,13 +82,20 @@ It's safer to avoid using <u>valueOr</u> if possible.<br><br>
 <b>Returns:</b><br>
 The result of validFun/invalidFun, if any, wrapped in a Maybe.
 <br><br>
-<b>Example:</b><br>
+<b>Examples:</b><br>
 <pre class="d_code"> <font color=blue>assert</font>(<u>match</u>!(to!string, ()=&gt;<font color=red>"&lt;invalid&gt;"</font>)(maybe(2)) == <font color=red>"2"</font>);
  <font color=blue>assert</font>(<u>match</u>!(to!string, ()=&gt;<font color=red>"&lt;invalid&gt;"</font>)(Maybe!<font color=blue>int</font>()) == <font color=red>"&lt;invalid&gt;"</font>);
  <font color=blue>assert</font>(<u>match</u>!(to!string, {})(maybe(2)) == <font color=red>"2"</font>);
  <font color=blue>assert</font>(<u>match</u>!(to!string, {})(Maybe!<font color=blue>int</font>()) == none);
  <font color=blue>assert</font>(<u>match</u>!((x, y)=&gt;text(x, y), {})(maybe(2), maybe(34)) == <font color=red>"234"</font>);
  <font color=blue>assert</font>(<u>match</u>!((x, y)=&gt;text(x, y), {})(Maybe!<font color=blue>int</font>(), maybe(34)) == none);
+</pre>
+ Arguments to <u>match</u> don't have to be Maybe instances:
+<pre class="d_code"> <font color=blue>assert</font>(<u>match</u>!(text, {})(1, maybe(2), 3) == <font color=red>"123"</font>);
+</pre>
+ The order of validFun and invalidFun can be reversed:
+<pre class="d_code"> <font color=blue>assert</font>(<u>match</u>!({}, text)(maybe('m')) == <font color=red>"m"</font>);
+ <font color=blue>assert</font>(<u>match</u>!({}, text)(Maybe!<font color=blue>char</font>()) == none);
 </pre>
 <br><br>
 
@@ -104,7 +111,7 @@ The result of validFun/invalidFun, if any, wrapped in a Maybe.
  which is why the result is not wrapped in a Maybe.
 <br><br>
 <b>Returns:</b><br>
-The result of validFun/invalidFun.
+The actual result of validFun/invalidFun.
 <br><br>
 <b>Example:</b><br>
 <pre class="d_code"> <font color=blue>assert</font>(<u>matchVal</u>!(x=&gt;2*x, ()=&gt;-1)(maybe(4)) <font color=blue>is</font> 8);
