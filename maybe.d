@@ -211,7 +211,7 @@ private template applyCode(Args...)
             s ~= "args[" ~ to!string(i) ~ "]";
             
             static if (isMaybe!(Arg))
-                s ~= ".val";
+                s ~= ".val.get";
         }
         return s;
     }
@@ -312,8 +312,7 @@ unittest
     
     static assert(!__traits(compiles, match!({}, {})(maybe(2))));
     static assert(__traits(compiles, match!(x=>x, ()=>0.0F)(1.0F)));
-    // constraint error, dmd 2.060
-    //~ static assert(__traits(compiles, match!(x=>x, ()=>0.0F)(maybe(1.0F))));
+    static assert(__traits(compiles, match!(x=>x, ()=>0.0F)(maybe(1.0F))));
     static assert(!is(typeof(match!(to!string, null)(0))));
     static assert(!is(typeof(match!({}, {})(0))));
     static assert(!is(typeof(match!(to!string, to!char)(0))));
@@ -330,12 +329,11 @@ unittest
 {
     assert(match!({}, text)(maybe('m')) == "m");
     assert(match!({}, text)(Maybe!char()) == none);
-    // x=>1*x workaround as x=>x doesn't work (2.060)
-    assert(match!(()=>-1, x=>1*x)(maybe(2)) == 2);
-    assert(match!(()=>-1, x=>1*x)(Maybe!int()) == -1);
-    assert(match!({}, x=>1*x)(maybe(2)) == 2);
-    //~ assert(match!({}, x=>x)(maybe(2)) == 2);
-    //~ assert(match!({}, x=>x)(maybe('m')) == 'm');
+    assert(match!(()=>-1, x=>x)(maybe(2)) == 2);
+    assert(match!(()=>-1, x=>x)(Maybe!int()) == -1);
+    assert(match!({}, x=>x)(maybe(2)) == 2);
+    assert(match!({}, x=>x)(Maybe!int()) == none);
+    assert(match!({}, x=>x)(maybe('m')) == 'm');
 }
 
 // based on an idea by Simen Kjaeraas
